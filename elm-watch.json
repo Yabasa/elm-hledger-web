@@ -1,0 +1,10 @@
+{
+    "targets": {
+        "My target name": {
+            "inputs": [
+                "src/ElmHledgerWeb.elm"
+            ],
+            "output": "build/elm_hledger_web.js"
+        }
+    }
+}
