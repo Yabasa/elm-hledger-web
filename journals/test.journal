@@ -31,8 +31,8 @@
     liabilities:credit_card:daily_card          550.00 USD
 
 2023-03-07 Pay back friend for dinner
-    assets:cash:bank:checking                   53.70 USD
-    expenses:food:restaurant:marcus            -53.70 USD
+    assets:cash:bank:checking                  -53.70 USD
+    expenses:food:restaurant:marcus             53.70 USD
 
 2023-03-08 Lunch
     liabilities:credit_card:daily_card         -14.41 USD
