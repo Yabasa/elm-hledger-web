@@ -8,7 +8,9 @@ import Element.Font as Font
 import Element.Input exposing (button)
 import Html exposing (Html)
 import Http
+import Iso8601
 import Json.Decode as D exposing (Decoder)
+import Time
 
 
 
@@ -25,7 +27,7 @@ type alias Model =
 
 type alias Transaction =
     { description : String
-    , date : String
+    , date : Time.Posix
     , index : Int
     , postings : List Posting
     }
@@ -63,7 +65,7 @@ txnDecoder : Decoder Transaction
 txnDecoder =
     D.map4 Transaction
         (D.field "tdescription" D.string)
-        (D.field "tdate" D.string)
+        (D.field "tdate" dateDecoder)
         (D.field "tindex" D.int)
         (D.field "tpostings" (D.list postingDecoder))
 
@@ -87,6 +89,21 @@ getAccNames =
 accNamesDecoder : Decoder (List String)
 accNamesDecoder =
     D.list D.string
+
+
+dateDecoder : Decoder Time.Posix
+dateDecoder =
+    D.string
+        |> D.andThen
+            (\dateAsString ->
+                case Iso8601.toTime dateAsString of
+                    Err _ ->
+                        -- For now just zero out the date if there is a problem parsing it
+                        D.succeed (Time.millisToPosix 0)
+
+                    Ok date ->
+                        D.succeed date
+            )
 
 
 
@@ -118,7 +135,7 @@ update msg model =
                     ( { model | transactions = transactions }, Cmd.none )
 
                 Err _ ->
-                    ( { model | transactions = [ Transaction "Something went wrong..." "" 0 [] ] }, Cmd.none )
+                    ( { model | transactions = [ Transaction "Something went wrong..." (Time.millisToPosix 0) 0 [] ] }, Cmd.none )
 
 
 
@@ -165,7 +182,7 @@ txnView txn =
         )
 
 
-dateView : String -> Element msg
+dateView : Time.Posix -> Element msg
 dateView date =
     el
         [ Border.width 1
@@ -176,7 +193,7 @@ dateView date =
         ]
         (el
             [ centerX, centerY ]
-            (text date)
+            (text <| String.fromInt <| Time.toYear Time.utc date)
         )
 
 
