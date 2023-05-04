@@ -1,7 +1,7 @@
 module ElmHledgerWeb exposing (main)
 
 import Browser
-import Element exposing (Element, alignRight, centerX, centerY, column, el, fill, height, layout, padding, px, rgb255, row, spacing, text, width)
+import Element exposing (Element, alignLeft, alignRight, centerX, centerY, column, el, fill, height, layout, padding, px, rgb255, row, spacing, text, width)
 import Element.Background as Background
 import Element.Border as Border
 import Element.Font as Font
@@ -171,13 +171,16 @@ txnView txn =
     el
         [ Border.width 1
         , Border.rounded 5
-        , Background.color (rgb255 100 100 100)
-        , padding 20
+        , Background.color (rgb255 100 34 214)
+        , padding 10
         , width <| px 600
         ]
-        (row []
+        (row [ spacing 10 ]
             [ dateView txn.date
-            , text txn.description
+            , column [ spacing 10 ]
+                [ el [ Font.color (rgb255 255 255 255) ] (text txn.description)
+                , postingsView txn.postings
+                ]
             ]
         )
 
@@ -186,15 +189,73 @@ dateView : Time.Posix -> Element msg
 dateView date =
     el
         [ Border.width 1
-        , width <| px 150
-        , height <| px 50
+        , width <| px 60
+        , height <| px 60
         , Border.rounded 5
         , Background.color (rgb255 150 150 150)
         ]
-        (el
-            [ centerX, centerY ]
-            (text <| String.fromInt <| Time.toYear Time.utc date)
+        (column [ width fill, height fill ]
+            [ el
+                [ centerX, centerY, Font.size 10 ]
+                (text <| monthAsString <| Time.toMonth Time.utc date)
+            , el
+                [ centerX, centerY, Font.size 25 ]
+                (text <| String.fromInt <| Time.toDay Time.utc date)
+            , el
+                [ centerX, centerY, Font.size 10 ]
+                (text <| String.fromInt <| Time.toYear Time.utc date)
+            ]
         )
+
+
+postingsView : List Posting -> Element msg
+postingsView postings =
+    row [ width fill ]
+        [ column []
+            (List.map (\p -> el [ Font.size 15, Font.color (rgb255 255 255 2555) ] (text p.account)) postings)
+        , column [ width fill ]
+            (List.map (\p -> el [ alignRight, Font.size 15, Font.color (rgb255 255 255 2555) ] (text <| String.fromFloat <| p.amount)) postings)
+        ]
+
+
+monthAsString : Time.Month -> String
+monthAsString month =
+    case month of
+        Time.Jan ->
+            "Jan"
+
+        Time.Feb ->
+            "Feb"
+
+        Time.Mar ->
+            "Mar"
+
+        Time.Apr ->
+            "Apr"
+
+        Time.May ->
+            "May"
+
+        Time.Jun ->
+            "Jun"
+
+        Time.Jul ->
+            "Jul"
+
+        Time.Aug ->
+            "Aug"
+
+        Time.Sep ->
+            "Sep"
+
+        Time.Oct ->
+            "Oct"
+
+        Time.Nov ->
+            "Nov"
+
+        Time.Dec ->
+            "Dec"
 
 
 
