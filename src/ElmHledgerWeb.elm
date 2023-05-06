@@ -1,7 +1,7 @@
 module ElmHledgerWeb exposing (main)
 
 import Browser
-import Element exposing (Element, alignLeft, alignRight, centerX, centerY, column, el, fill, height, layout, padding, px, rgb255, row, spacing, text, width)
+import Element exposing (Element, alignRight, centerX, centerY, column, el, fill, height, layout, padding, px, rgb255, row, spacing, text, width)
 import Element.Background as Background
 import Element.Border as Border
 import Element.Font as Font
@@ -279,6 +279,7 @@ init _ =
     ( initModel, Cmd.none )
 
 
+initModel : { accNames : List a, transactions : List b }
 initModel =
     { accNames = []
     , transactions = []
