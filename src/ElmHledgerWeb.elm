@@ -1,6 +1,7 @@
 module ElmHledgerWeb exposing (main)
 
 import Browser
+import Dict exposing (Dict)
 import Element exposing (Element, alignRight, centerX, centerY, column, el, fill, height, layout, padding, px, rgb255, row, spacing, text, width)
 import Element.Background as Background
 import Element.Border as Border
@@ -10,6 +11,7 @@ import Html exposing (Html)
 import Http
 import Iso8601
 import Json.Decode as D exposing (Decoder)
+import Round
 import Time
 
 
@@ -38,6 +40,10 @@ type alias Posting =
     , commodity : String
     , amount : Float
     }
+
+
+type alias AccSummary =
+    Dict String Float
 
 
 type Msg
@@ -148,21 +154,14 @@ view : Model -> Html Msg
 view model =
     layout [] <|
         column [ width fill ]
-            [ button
-                [ Background.color (rgb255 89 205 255)
-                , Border.rounded 5
-                , width <| px 150
-                , height <| px 70
-                , Font.size 15
-                ]
-                { onPress = Just GetTransactions
-                , label = el [ centerX, centerY ] (text "Get Transactions")
-                }
-            , column
+            [ column
                 [ spacing 10
                 , centerX
                 ]
-                (List.map txnView model.transactions)
+                (List.append
+                    [ summaryView (getAccSummary model.transactions) ]
+                    (List.map txnView model.transactions)
+                )
             ]
 
 
@@ -258,6 +257,66 @@ monthAsString month =
             "Dec"
 
 
+summaryView : AccSummary -> Element msg
+summaryView accSum =
+    let
+        accNames =
+            Dict.keys accSum
+
+        getAmount accName =
+            Dict.get accName accSum
+                |> Maybe.withDefault 0
+                |> Round.round 2
+    in
+    el []
+        (column []
+            (List.map (\accName -> el [] <| text (accName ++ ": " ++ getAmount accName)) accNames)
+        )
+
+
+getAccSummary : List Transaction -> AccSummary
+getAccSummary txns =
+    let
+        allPostings : List Posting
+        allPostings =
+            List.map (\t -> t.postings) txns
+                |> List.concat
+                -- Convert all accounts name to just the top level account
+                |> List.map (\p -> { p | account = getTopLevelAccName p.account })
+
+        topLevelAccNames =
+            unique <| List.map (\p -> getTopLevelAccName p.account) allPostings
+
+        accTotal : String -> ( String, Float )
+        accTotal accName =
+            List.filter (\p -> p.account == accName) allPostings
+                |> List.map (\p -> p.amount)
+                |> List.sum
+                |> Tuple.pair accName
+    in
+    Dict.fromList <|
+        List.map accTotal topLevelAccNames
+
+
+unique : List a -> List a
+unique list =
+    List.foldl
+        (\a uniques ->
+            if List.member a uniques then
+                uniques
+
+            else
+                uniques ++ [ a ]
+        )
+        []
+        list
+
+
+getTopLevelAccName : String -> String
+getTopLevelAccName fullAccName =
+    Maybe.withDefault "unknown" <| List.head <| String.split ":" fullAccName
+
+
 
 --
 -- MAIN
@@ -276,7 +335,7 @@ main =
 
 init : () -> ( Model, Cmd Msg )
 init _ =
-    ( initModel, Cmd.none )
+    ( initModel, getTransactions )
 
 
 initModel : { accNames : List a, transactions : List b }
